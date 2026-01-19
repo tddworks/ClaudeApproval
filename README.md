@@ -14,7 +14,7 @@ You're using Claude Code to help with development, but every time it needs to ru
 
 Claude Approval routes permission requests to your iPhone. When Claude asks "Can I run this command?", you see it on your phone and tap Approve or Decline.
 
-<img src="docs/screenshots/demo.png" width="300" alt="Claude Approval Demo">
+<img src="docs/screenshots/demo.png" width="600" alt="Claude Approval Demo">
 
 ```
 You're on your phone                Your Mac (running Claude Code)
