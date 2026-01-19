@@ -211,6 +211,71 @@ This is normal - it happens when the iOS app goes to background and iOS drops th
 
 ---
 
+## API Reference
+
+The server exposes these HTTP endpoints on port `8754`:
+
+### GET /status
+
+Quick check if there are pending requests waiting for approval.
+
+```bash
+curl http://localhost:8754/status
+```
+
+Response:
+```json
+{
+  "has_pending": true,
+  "pending_count": 2,
+  "notification_count": 0,
+  "pending": [
+    {
+      "id": "abc123",
+      "tool": "Bash",
+      "description": "npm install",
+      "age_seconds": 15
+    }
+  ]
+}
+```
+
+### GET /health
+
+Simple health check to verify server is running.
+
+```bash
+curl http://localhost:8754/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "service": "ClaudeApproval"
+}
+```
+
+### GET /pending
+
+Get full details of all pending requests (used by iOS app).
+
+```bash
+curl http://localhost:8754/pending
+```
+
+### POST /respond
+
+Approve or decline a request by ID.
+
+```bash
+curl -X POST http://localhost:8754/respond \
+  -H "Content-Type: application/json" \
+  -d '{"id": "abc123", "approved": true}'
+```
+
+---
+
 ## Security Notes
 
 - **Local Network Only**: All communication stays on your WiFi

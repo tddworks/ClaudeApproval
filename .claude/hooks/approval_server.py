@@ -95,6 +95,34 @@ class ApprovalHandler(BaseHTTPRequestHandler):
         if self.path == "/health":
             self._send_json({"status": "ok", "service": SERVICE_NAME})
 
+        elif self.path == "/status":
+            # Quick status check - are there pending messages?
+            with request_lock:
+                pending_count = sum(
+                    1 for rid in pending_requests
+                    if rid not in request_responses or request_responses[rid] is None
+                )
+                pending_list = [
+                    {
+                        "id": rid,
+                        "tool": data.get("tool", "unknown"),
+                        "description": data.get("description", "")[:50],
+                        "age_seconds": int(time.time() - data.get("timestamp", time.time())),
+                    }
+                    for rid, data in pending_requests.items()
+                    if rid not in request_responses or request_responses[rid] is None
+                ]
+
+            with notifications_lock:
+                notification_count = len(notifications)
+
+            self._send_json({
+                "has_pending": pending_count > 0,
+                "pending_count": pending_count,
+                "notification_count": notification_count,
+                "pending": pending_list,
+            })
+
         elif self.path == "/pending":
             # Return all pending requests for iOS app to display
             with request_lock:
