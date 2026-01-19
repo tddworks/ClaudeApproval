@@ -68,6 +68,17 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
             throw ApprovalError.notConnected
         }
 
+        // Fetch both pending requests and notifications
+        async let pendingTask = fetchPending()
+        async let notificationsTask = fetchNotifications()
+
+        let (pending, notifications) = try await (pendingTask, notificationsTask)
+        return pending + notifications
+    }
+
+    private func fetchPending() async throws -> [ApprovalRequest] {
+        guard let serverHost else { return [] }
+
         let url = URL(string: "http://\(serverHost):\(serverPort)/pending")!
         let (data, _) = try await URLSession.shared.data(from: url)
 
@@ -78,6 +89,23 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
                 tool: dto.tool,
                 description: dto.description,
                 input: dto.input ?? [:],
+                timestamp: Date(timeIntervalSince1970: dto.timestamp)
+            )
+        }
+    }
+
+    private func fetchNotifications() async throws -> [ApprovalRequest] {
+        guard let serverHost else { return [] }
+
+        let url = URL(string: "http://\(serverHost):\(serverPort)/notifications")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+
+        let response = try JSONDecoder().decode(NotificationsResponse.self, from: data)
+        return response.notifications.map { dto in
+            ApprovalRequest(
+                id: dto.id,
+                tool: dto.tool,
+                description: dto.description,
                 timestamp: Date(timeIntervalSince1970: dto.timestamp)
             )
         }
@@ -161,11 +189,22 @@ private struct PendingResponse: Codable {
     let requests: [RequestDTO]
 }
 
+private struct NotificationsResponse: Codable {
+    let notifications: [NotificationDTO]
+}
+
 private struct RequestDTO: Codable {
     let id: String
     let tool: String
     let description: String
     let input: [String: String]?
+    let timestamp: Double
+}
+
+private struct NotificationDTO: Codable {
+    let id: String
+    let tool: String
+    let description: String
     let timestamp: Double
 }
 
