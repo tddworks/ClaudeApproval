@@ -76,18 +76,30 @@ def output_decision(approved: bool, message: str = ""):
     print(json.dumps(decision))
 
 
+def log(msg: str):
+    """Log to file for debugging."""
+    with open("/tmp/claude_hook.log", "a") as f:
+        f.write(f"{msg}\n")
+
+
 def main():
     """Main hook entry point."""
+    log("Hook called!")
+
     try:
         # Read hook input from stdin
-        input_data = json.load(sys.stdin)
-    except json.JSONDecodeError:
+        raw = sys.stdin.read()
+        log(f"Raw input: {raw}")
+        input_data = json.loads(raw) if raw else {}
+    except json.JSONDecodeError as e:
         # No valid input, allow by default
+        log(f"JSON decode error: {e}")
         output_decision(True)
         sys.exit(0)
 
     # Extract tool info from PermissionRequest payload
-    tool = input_data.get("tool", "")
+    # Note: Claude Code uses "tool_name" not "tool"
+    tool = input_data.get("tool_name", "")
     tool_input = input_data.get("tool_input", {})
 
     # Build description based on tool type

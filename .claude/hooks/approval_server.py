@@ -8,22 +8,46 @@ approving Claude Code permission requests from an iOS device.
 Usage:
     python3 approval_server.py
 
+    # With push notifications (using ntfy.sh):
+    NTFY_TOPIC=your-secret-topic python3 approval_server.py
+
 The server advertises itself as "_claudeapproval._tcp.local." on port 8754.
 """
 
 import json
+import os
+import socket
 import threading
 import time
+import urllib.request
+import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from typing import Optional
 import subprocess
 import sys
 
+# Push notification config (optional - use ntfy.sh)
+NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")  # Set to enable push notifications
+NTFY_SERVER = os.environ.get("NTFY_SERVER", "https://ntfy.sh")
+
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     """HTTP server that handles each request in a separate thread."""
     daemon_threads = True
+
+    def handle_error(self, request, client_address):
+        """Suppress connection reset errors from iOS going to background."""
+        exc_type, exc_value, _ = sys.exc_info()
+        if exc_type is ConnectionResetError:
+            # iOS app went to background - this is expected, ignore it
+            pass
+        elif exc_type is BrokenPipeError:
+            # Client disconnected - also expected
+            pass
+        else:
+            # Log other errors
+            print(f"⚠️  Error from {client_address}: {exc_value}")
 
 # Server configuration
 PORT = 8754
@@ -110,6 +134,15 @@ class ApprovalHandler(BaseHTTPRequestHandler):
 
             print(f"📱 New request: {request_id} - {data.get('tool')}")
 
+            # Send push notification (async, non-blocking)
+            tool = data.get("tool", "unknown")
+            desc = data.get("description", "")[:80]
+            threading.Thread(
+                target=send_push_notification,
+                args=(f"Claude: {tool}", desc),
+                daemon=True,
+            ).start()
+
             # Wait for response (with timeout)
             timeout = data.get("timeout", 120)  # 2 minutes default
             event = request_events[request_id]
@@ -168,6 +201,38 @@ class ApprovalHandler(BaseHTTPRequestHandler):
         pass
 
 
+def send_push_notification(title: str, message: str, actions: list[dict] = None):
+    """Send push notification via ntfy.sh (if configured)."""
+    if not NTFY_TOPIC:
+        return
+
+    try:
+        headers = {
+            "Title": title,
+            "Priority": "high",
+            "Tags": "robot",
+        }
+
+        # Add action buttons if provided
+        if actions:
+            # Format: action=view, Open App, http://localhost:8754
+            action_strs = []
+            for action in actions:
+                action_strs.append(f"{action['type']}, {action['label']}, {action['url']}")
+            headers["Actions"] = "; ".join(action_strs)
+
+        req = urllib.request.Request(
+            f"{NTFY_SERVER}/{NTFY_TOPIC}",
+            data=message.encode(),
+            headers=headers,
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=5)
+        print(f"📤 Push sent: {title}")
+    except Exception as e:
+        print(f"⚠️  Push notification failed: {e}")
+
+
 def advertise_bonjour():
     """Advertise service via Bonjour using dns-sd command."""
     try:
@@ -189,6 +254,13 @@ def main():
     print("=" * 50)
     print("🚀 Claude Code Mobile Approval Server")
     print("=" * 50)
+
+    # Show push notification status
+    if NTFY_TOPIC:
+        print(f"📤 Push notifications: enabled (topic: {NTFY_TOPIC})")
+    else:
+        print("📤 Push notifications: disabled")
+        print("   Set NTFY_TOPIC env var to enable (uses ntfy.sh)")
 
     # Start Bonjour advertising
     bonjour_process = advertise_bonjour()
