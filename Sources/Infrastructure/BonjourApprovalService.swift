@@ -11,6 +11,8 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
     private var serverEndpoint: NWEndpoint?
     private var serverHost: String?
     private var serverPort: UInt16 = 8754
+    private var reconnectTask: Task<Void, Never>?
+    private var isReconnecting = false
 
     private weak var requests: ApprovalRequests?
 
@@ -88,7 +90,6 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
                 id: dto.id,
                 tool: dto.tool,
                 description: dto.description,
-                input: dto.input ?? [:],
                 timestamp: Date(timeIntervalSince1970: dto.timestamp)
             )
         }
@@ -161,7 +162,19 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
                     }
                 case .failed(let error):
                     print("Connection failed: \(error)")
+                    self.serverHost = nil
                     self.requests?.updateConnectionStatus(connected: false, address: nil)
+                    // Auto-reconnect after failure
+                    self.scheduleReconnect()
+
+                case .cancelled:
+                    print("Connection cancelled")
+                    self.serverHost = nil
+                    self.requests?.updateConnectionStatus(connected: false, address: nil)
+
+                case .waiting(let error):
+                    print("Connection waiting: \(error)")
+
                 default:
                     break
                 }
@@ -181,6 +194,25 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
         // Simplified - just use description or fallback
         return "localhost"
     }
+
+    private func scheduleReconnect() {
+        guard !isReconnecting else { return }
+        isReconnecting = true
+
+        reconnectTask?.cancel()
+        reconnectTask = Task {
+            // Wait before reconnecting
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+
+            print("Attempting to reconnect...")
+            isReconnecting = false
+
+            // Restart browsing to find server again
+            await stopBrowsing()
+            await startBrowsing()
+        }
+    }
 }
 
 // MARK: - DTOs
@@ -197,8 +229,13 @@ private struct RequestDTO: Codable {
     let id: String
     let tool: String
     let description: String
-    let input: [String: String]?
+    // Note: input is ignored - it can contain mixed types (strings, bools, numbers)
+    // and we only need description for display anyway
     let timestamp: Double
+
+    enum CodingKeys: String, CodingKey {
+        case id, tool, description, timestamp
+    }
 }
 
 private struct NotificationDTO: Codable {

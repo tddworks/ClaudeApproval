@@ -3,7 +3,8 @@ import Domain
 
 struct ContentView: View {
     @Bindable var requests: ApprovalRequests
-    @State private var refreshTimer: Timer?
+    @State private var pollingTask: Task<Void, Never>?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -19,11 +20,12 @@ struct ContentView: View {
             .navigationTitle("Claude Approval")
             .preferredColorScheme(.dark)
         }
-        .onAppear {
-            startPolling()
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            handleSceneChange(to: newPhase)
         }
-        .onDisappear {
-            stopPolling()
+        .task {
+            // Start polling when view appears
+            startPolling()
         }
     }
 
@@ -40,12 +42,30 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                Text("Searching for server...")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text("Searching for server...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
             }
 
             Spacer()
+
+            // Manual reconnect button
+            if !requests.isConnected {
+                Button {
+                    Task {
+                        await requests.connect()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -71,6 +91,13 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
+            if !requests.isConnected {
+                Text("Waiting for server connection...")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 8)
+            }
+
             Spacer()
         }
         .padding()
@@ -93,21 +120,41 @@ struct ContentView: View {
             }
         }
         .listStyle(.plain)
+        .refreshable {
+            await requests.refresh()
+        }
+    }
+
+    // MARK: - Scene Handling
+
+    private func handleSceneChange(to phase: ScenePhase) {
+        switch phase {
+        case .active:
+            startPolling()
+        case .background, .inactive:
+            stopPolling()
+        @unknown default:
+            break
+        }
     }
 
     // MARK: - Polling
 
     private func startPolling() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-            Task { @MainActor in
+        // Cancel any existing polling task
+        pollingTask?.cancel()
+
+        pollingTask = Task {
+            while !Task.isCancelled {
                 await requests.refresh()
+                try? await Task.sleep(for: .seconds(2))
             }
         }
     }
 
     private func stopPolling() {
-        refreshTimer?.invalidate()
-        refreshTimer = nil
+        pollingTask?.cancel()
+        pollingTask = nil
     }
 }
 

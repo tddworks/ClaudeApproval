@@ -48,12 +48,21 @@ public final class ApprovalRequests {
     // MARK: - Request Management
 
     public func refresh() async {
-        guard let service, isConnected else { return }
+        guard let service else { return }
+
+        // Try to fetch even if not "connected" - the HTTP request will work
+        // if we have a valid server address from Bonjour discovery
         do {
             let pending = try await service.fetchPendingRequests()
             requests = pending
+            // If fetch succeeded, we're effectively connected
+            if !isConnected {
+                isConnected = true
+            }
         } catch {
-            requests = []
+            // Fetch failed - could be not connected or network error
+            // Don't clear requests immediately, they might still be valid
+            print("Refresh failed: \(error)")
         }
     }
 

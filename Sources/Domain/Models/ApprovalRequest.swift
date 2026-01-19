@@ -6,20 +6,17 @@ public final class ApprovalRequest: Identifiable, Sendable {
     public let id: String
     public let tool: String
     public let description: String
-    public let input: [String: String]
     public let timestamp: Date
 
     public init(
         id: String,
         tool: String,
         description: String,
-        input: [String: String] = [:],
         timestamp: Date = .now
     ) {
         self.id = id
         self.tool = tool
         self.description = description
-        self.input = input
         self.timestamp = timestamp
     }
 }

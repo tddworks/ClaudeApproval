@@ -43,5 +43,9 @@
     <array>
         <string>_claudeapproval._tcp</string>
     </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+    </array>
 </dict>
 </plist>
