@@ -1,0 +1,28 @@
+# Xcode
+*.xcworkspace
+*.xcodeproj
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Tuist
+Tuist/.build/
+.build/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Derived
+Derived/

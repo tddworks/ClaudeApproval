@@ -1,0 +1,36 @@
+/*
+  Localizable.strings
+  ClaudeApproval
+
+  Japanese localization
+*/
+
+// MARK: - App
+"app.title" = "Claude 承認";
+
+// MARK: - Connection Status
+"connection.connected_to %@" = "%@ に接続中";
+"connection.connected_to_server" = "サーバーに接続中";
+"connection.searching" = "サーバーを検索中...";
+"connection.waiting" = "サーバー接続を待機中...";
+
+// MARK: - Empty State
+"empty.title" = "保留中のリクエストなし";
+"empty.message" = "Claude Code からの許可リクエストがここに表示されます";
+
+// MARK: - Request Actions
+"action.approve" = "承認";
+"action.decline" = "拒否";
+
+// MARK: - Tools
+"tool.bash" = "Bash";
+"tool.edit" = "編集";
+"tool.write" = "書き込み";
+"tool.read" = "読み取り";
+"tool.unknown" = "不明";
+
+// MARK: - Request Status
+"status.pending" = "保留中";
+"status.approved" = "承認済み";
+"status.declined" = "拒否済み";
+"status.expired" = "期限切れ";

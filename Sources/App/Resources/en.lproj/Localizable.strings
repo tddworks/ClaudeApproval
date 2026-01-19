@@ -1,0 +1,36 @@
+/*
+  Localizable.strings
+  ClaudeApproval
+
+  English (Base) localization
+*/
+
+// MARK: - App
+"app.title" = "Claude Approval";
+
+// MARK: - Connection Status
+"connection.connected_to %@" = "Connected to %@";
+"connection.connected_to_server" = "Connected to server";
+"connection.searching" = "Searching for server...";
+"connection.waiting" = "Waiting for server connection...";
+
+// MARK: - Empty State
+"empty.title" = "No Pending Requests";
+"empty.message" = "Permission requests from Claude Code\nwill appear here";
+
+// MARK: - Request Actions
+"action.approve" = "Approve";
+"action.decline" = "Decline";
+
+// MARK: - Tools
+"tool.bash" = "Bash";
+"tool.edit" = "Edit";
+"tool.write" = "Write";
+"tool.read" = "Read";
+"tool.unknown" = "Unknown";
+
+// MARK: - Request Status
+"status.pending" = "Pending";
+"status.approved" = "Approved";
+"status.declined" = "Declined";
+"status.expired" = "Expired";

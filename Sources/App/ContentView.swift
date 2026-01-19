@@ -17,14 +17,13 @@ struct ContentView: View {
                     requestsList
                 }
             }
-            .navigationTitle("Claude Approval")
+            .navigationTitle(ClaudeApprovalStrings.App.title)
             .preferredColorScheme(.dark)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             handleSceneChange(to: newPhase)
         }
         .task {
-            // Start polling when view appears
             startPolling()
         }
     }
@@ -38,12 +37,12 @@ struct ContentView: View {
                 .frame(width: 10, height: 10)
 
             if requests.isConnected {
-                Text("Connected to \(requests.serverAddress ?? "server")")
+                Text(ClaudeApprovalStrings.Connection.connectedTo(requests.serverAddress ?? "server"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 HStack(spacing: 4) {
-                    Text("Searching for server...")
+                    Text(ClaudeApprovalStrings.Connection.searching)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     ProgressView()
@@ -53,7 +52,6 @@ struct ContentView: View {
 
             Spacer()
 
-            // Manual reconnect button
             if !requests.isConnected {
                 Button {
                     Task {
@@ -82,17 +80,17 @@ struct ContentView: View {
                 .font(.system(size: 64))
                 .foregroundStyle(.secondary)
 
-            Text("No Pending Requests")
+            Text(ClaudeApprovalStrings.Empty.title)
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("Permission requests from Claude Code\nwill appear here")
+            Text(ClaudeApprovalStrings.Empty.message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             if !requests.isConnected {
-                Text("Waiting for server connection...")
+                Text(ClaudeApprovalStrings.Connection.waiting)
                     .font(.caption)
                     .foregroundStyle(.orange)
                     .padding(.top, 8)
@@ -141,7 +139,6 @@ struct ContentView: View {
     // MARK: - Polling
 
     private func startPolling() {
-        // Cancel any existing polling task
         pollingTask?.cancel()
 
         pollingTask = Task {
@@ -187,14 +184,14 @@ struct RequestCard: View {
             // Action Buttons
             HStack(spacing: 12) {
                 Button(action: onDecline) {
-                    Label("Decline", systemImage: "xmark")
+                    Label(ClaudeApprovalStrings.Action.decline, systemImage: "xmark")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
 
                 Button(action: onApprove) {
-                    Label("Approve", systemImage: "checkmark")
+                    Label(ClaudeApprovalStrings.Action.approve, systemImage: "checkmark")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)

@@ -71,6 +71,9 @@ struct ClaudeApprovalApp: App {
     private func scheduleBackgroundRefresh() {
         // Background App Refresh is handled by the system
         // This is a placeholder for future enhancement
+        Task {
+            await requests.refresh()
+        }
         print("Background mode - polling will stop")
     }
 }

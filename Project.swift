@@ -3,7 +3,7 @@ import ProjectDescription
 let project = Project(
     name: "ClaudeApproval",
     options: .options(
-        defaultKnownRegions: ["en"],
+        defaultKnownRegions: ["en", "ja"],
         developmentRegion: "en"
     ),
     settings: .settings(
