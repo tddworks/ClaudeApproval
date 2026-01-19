@@ -78,40 +78,6 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
         return pending + notifications
     }
 
-    private func fetchPending() async throws -> [ApprovalRequest] {
-        guard let serverHost else { return [] }
-
-        let url = URL(string: "http://\(serverHost):\(serverPort)/pending")!
-        let (data, _) = try await URLSession.shared.data(from: url)
-
-        let response = try JSONDecoder().decode(PendingResponse.self, from: data)
-        return response.requests.map { dto in
-            ApprovalRequest(
-                id: dto.id,
-                tool: dto.tool,
-                description: dto.description,
-                timestamp: Date(timeIntervalSince1970: dto.timestamp)
-            )
-        }
-    }
-
-    private func fetchNotifications() async throws -> [ApprovalRequest] {
-        guard let serverHost else { return [] }
-
-        let url = URL(string: "http://\(serverHost):\(serverPort)/notifications")!
-        let (data, _) = try await URLSession.shared.data(from: url)
-
-        let response = try JSONDecoder().decode(NotificationsResponse.self, from: data)
-        return response.notifications.map { dto in
-            ApprovalRequest(
-                id: dto.id,
-                tool: dto.tool,
-                description: dto.description,
-                timestamp: Date(timeIntervalSince1970: dto.timestamp)
-            )
-        }
-    }
-
     public func respond(to requestId: String, approved: Bool) async throws {
         guard let serverHost else {
             throw ApprovalError.notConnected
@@ -122,7 +88,7 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let body = RespondRequest(id: requestId, approved: approved)
+        let body = ResponsePayload(id: requestId, approved: approved)
         request.httpBody = try JSONEncoder().encode(body)
 
         let (_, response) = try await URLSession.shared.data(for: request)
@@ -132,7 +98,43 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
         }
     }
 
-    // MARK: - Private
+    // MARK: - Private Fetch Methods
+
+    private func fetchPending() async throws -> [ApprovalRequest] {
+        guard let serverHost else { return [] }
+
+        let url = URL(string: "http://\(serverHost):\(serverPort)/pending")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let timestamp = try container.decode(Double.self)
+            return Date(timeIntervalSince1970: timestamp)
+        }
+
+        let response = try decoder.decode(PendingResponse.self, from: data)
+        return response.requests
+    }
+
+    private func fetchNotifications() async throws -> [ApprovalRequest] {
+        guard let serverHost else { return [] }
+
+        let url = URL(string: "http://\(serverHost):\(serverPort)/notifications")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let timestamp = try container.decode(Double.self)
+            return Date(timeIntervalSince1970: timestamp)
+        }
+
+        let response = try decoder.decode(NotificationsResponse.self, from: data)
+        return response.notifications
+    }
+
+    // MARK: - Connection
 
     private func resolveAndConnect(endpoint: NWEndpoint) async {
         let connection = NWConnection(to: endpoint, using: .tcp)
@@ -164,7 +166,6 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
                     print("Connection failed: \(error)")
                     self.serverHost = nil
                     self.requests?.updateConnectionStatus(connected: false, address: nil)
-                    // Auto-reconnect after failure
                     self.scheduleReconnect()
 
                 case .cancelled:
@@ -185,67 +186,46 @@ public final class BonjourApprovalService: ApprovalService, @unchecked Sendable 
         connection.start(queue: .main)
     }
 
-    private func ipv4String(from addr: IPv4Address) -> String {
-        let data = addr.rawValue
-        return "\(data[0]).\(data[1]).\(data[2]).\(data[3])"
-    }
-
-    private func ipv6String(from addr: IPv6Address) -> String {
-        // Simplified - just use description or fallback
-        return "localhost"
-    }
-
     private func scheduleReconnect() {
         guard !isReconnecting else { return }
         isReconnecting = true
 
         reconnectTask?.cancel()
         reconnectTask = Task {
-            // Wait before reconnecting
             try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled else { return }
 
             print("Attempting to reconnect...")
             isReconnecting = false
-
-            // Restart browsing to find server again
             await stopBrowsing()
             await startBrowsing()
         }
     }
-}
 
-// MARK: - DTOs
+    private func ipv4String(from addr: IPv4Address) -> String {
+        let data = addr.rawValue
+        return "\(data[0]).\(data[1]).\(data[2]).\(data[3])"
+    }
 
-private struct PendingResponse: Codable {
-    let requests: [RequestDTO]
-}
-
-private struct NotificationsResponse: Codable {
-    let notifications: [NotificationDTO]
-}
-
-private struct RequestDTO: Codable {
-    let id: String
-    let tool: String
-    let description: String
-    // Note: input is ignored - it can contain mixed types (strings, bools, numbers)
-    // and we only need description for display anyway
-    let timestamp: Double
-
-    enum CodingKeys: String, CodingKey {
-        case id, tool, description, timestamp
+    private func ipv6String(from addr: IPv6Address) -> String {
+        return "localhost"
     }
 }
 
-private struct NotificationDTO: Codable {
-    let id: String
-    let tool: String
-    let description: String
-    let timestamp: Double
+// MARK: - API Response Wrappers (minimal, uses domain models)
+
+/// Response wrapper for /pending endpoint
+private struct PendingResponse: Codable {
+    let requests: [ApprovalRequest]
 }
 
-private struct RespondRequest: Codable {
+/// Response wrapper for /notifications endpoint
+private struct NotificationsResponse: Codable {
+    let notifications: [ApprovalRequest]
+}
+
+/// Request payload for /respond endpoint
+private struct ResponsePayload: Codable {
     let id: String
     let approved: Bool
 }
