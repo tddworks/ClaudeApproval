@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Approval - iOS UX Prototype</title>
+  <style>
+    /* iOS Design System */
+    :root {
+      --bg-primary: #000000;
+      --bg-secondary: #1c1c1e;
+      --bg-tertiary: #2c2c2e;
+      --bg-elevated: #3a3a3c;
+      --text-primary: #ffffff;
+      --text-secondary: #8e8e93;
+      --text-tertiary: #636366;
+      --separator: #38383a;
+      --blue: #0a84ff;
+      --green: #30d158;
+      --red: #ff453a;
+      --orange: #ff9f0a;
+      --yellow: #ffd60a;
+      --purple: #bf5af2;
+      --cyan: #64d2ff;
+      --phone-width: 280px;
+      --phone-height: 600px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      padding: 40px 20px;
+    }
+
+    .page {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .page-header h1 {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-header p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .journey-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+
+    .journey-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .step-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .phone-frame {
+      width: var(--phone-width);
+      height: var(--phone-height);
+      background: #000;
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-primary);
+      border-radius: 34px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .screen-layout {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 24px 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-bar-left {
+      width: 54px;
+    }
+
+    .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-bar-right svg {
+      width: 18px;
+      height: 12px;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: var(--text-primary);
+      border-radius: 3px;
+      opacity: 0.3;
+    }
+
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      margin-top: 280px;
+    }
+
+    .flow-arrow svg {
+      width: 32px;
+      height: 32px;
+      color: var(--text-secondary);
+    }
+
+    /* Navigation */
+    .nav-large {
+      padding: 8px 20px 16px;
+    }
+
+    .nav-large h1 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .nav-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      min-height: 44px;
+    }
+
+    .nav-inline-left {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--blue);
+      font-size: 17px;
+    }
+
+    .nav-inline-left svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .nav-inline-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .nav-inline-right {
+      color: var(--blue);
+      font-size: 17px;
+    }
+
+    /* Screen Content */
+    .screen-content {
+      flex: 1;
+      padding: 0 16px;
+      overflow-y: auto;
+    }
+
+    /* Connection Status */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg-secondary);
+      margin: 0 -16px 16px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .status-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .status-dot.disconnected {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+    }
+
+    .status-dot.searching {
+      background: var(--orange);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Empty State */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .empty-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Request Card */
+    .request-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .request-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .request-tool {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .tool-icon.bash {
+      background: rgba(255, 159, 10, 0.2);
+      color: var(--orange);
+    }
+
+    .tool-icon.edit {
+      background: rgba(10, 132, 255, 0.2);
+      color: var(--blue);
+    }
+
+    .tool-icon.read {
+      background: rgba(48, 209, 88, 0.2);
+      color: var(--green);
+    }
+
+    .tool-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .request-time {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .request-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+      line-height: 1.4;
+      font-family: 'SF Mono', Monaco, monospace;
+      background: var(--bg-tertiary);
+      padding: 10px;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+
+    .request-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .action-btn.decline {
+      background: rgba(255, 69, 58, 0.15);
+      color: var(--red);
+      border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+
+    .action-btn.approve {
+      background: var(--green);
+      color: #000;
+    }
+
+    .action-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Annotation */
+    .annotation {
+      position: absolute;
+      background: rgba(10, 132, 255, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    .annotation::after {
+      content: '';
+      position: absolute;
+      border: 6px solid transparent;
+    }
+
+    .annotation.right::after {
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left-color: rgba(10, 132, 255, 0.9);
+    }
+
+    .annotation.left::after {
+      left: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-right-color: rgba(10, 132, 255, 0.9);
+    }
+
+    .annotation.bottom::after {
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-top-color: rgba(10, 132, 255, 0.9);
+    }
+
+    /* Section Divider */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 40px 0;
+      width: 100%;
+    }
+
+    .section-divider-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--text-tertiary) 50%, transparent 100%);
+    }
+
+    .section-divider-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* Success/Error States */
+    .feedback-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 34px;
+      z-index: 30;
+    }
+
+    .feedback-content {
+      text-align: center;
+    }
+
+    .feedback-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .feedback-text {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .feedback-content.approved .feedback-icon {
+      color: var(--green);
+    }
+
+    .feedback-content.declined .feedback-icon {
+      color: var(--red);
+    }
+
+    /* Multiple Requests Badge */
+    .request-count-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--red);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <h1>Claude Approval</h1>
+      <p>Mobile approval flow for Claude Code permission requests via Bonjour local network discovery</p>
+    </header>
+
+    <!-- Main Flow: Connection & Approval -->
+    <div class="journey-row">
+      <!-- Step 1: Searching -->
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <span class="step-title">Searching</span>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content">
+                <div class="connection-status">
+                  <div class="status-dot searching"></div>
+                  <span class="status-text">Searching for server...</span>
+                </div>
+                <div class="empty-state">
+                  <div class="empty-icon">📡</div>
+                  <div class="empty-title">Looking for Mac</div>
+                  <div class="empty-subtitle">Make sure the approval server is running on your Mac</div>
+                </div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation bottom" style="bottom: -45px; left: 50%; transform: translateX(-50%);">Bonjour discovery</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- Step 2: Connected, Empty -->
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <span class="step-title">Connected</span>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content">
+                <div class="connection-status">
+                  <div class="status-dot connected"></div>
+                  <span class="status-text">Connected to 192.168.1.42:8754</span>
+                </div>
+                <div class="empty-state">
+                  <div class="empty-icon">✓</div>
+                  <div class="empty-title">No Pending Requests</div>
+                  <div class="empty-subtitle">Permission requests from Claude Code will appear here</div>
+                </div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation bottom" style="bottom: -45px; left: 50%; transform: translateX(-50%);">Ready & waiting</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- Step 3: Request Arrives -->
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <span class="step-title">Request Arrives</span>
+        </div>
+        <div class="phone-frame" style="position: relative;">
+          <div class="request-count-badge">1</div>
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content">
+                <div class="connection-status">
+                  <div class="status-dot connected"></div>
+                  <span class="status-text">Connected to 192.168.1.42:8754</span>
+                </div>
+                <div class="request-card">
+                  <div class="request-header">
+                    <div class="request-tool">
+                      <div class="tool-icon bash">⌘</div>
+                      <span class="tool-name">Bash</span>
+                    </div>
+                    <span class="request-time">2s ago</span>
+                  </div>
+                  <div class="request-description">ls -la /Users/hanrenwei/project</div>
+                  <div class="request-actions">
+                    <button class="action-btn decline">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                      Decline
+                    </button>
+                    <button class="action-btn approve">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation right" style="top: 320px; left: -120px;">Tap to decide →</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- Step 4: Approved -->
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <span class="step-title">Approved</span>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content">
+                <div class="connection-status">
+                  <div class="status-dot connected"></div>
+                  <span class="status-text">Connected to 192.168.1.42:8754</span>
+                </div>
+                <div class="empty-state">
+                  <div class="empty-icon">✓</div>
+                  <div class="empty-title">No Pending Requests</div>
+                  <div class="empty-subtitle">Permission requests from Claude Code will appear here</div>
+                </div>
+              </div>
+            </div>
+            <div class="feedback-overlay" style="animation: fadeOut 0.5s ease-out 1s forwards;">
+              <div class="feedback-content approved">
+                <div class="feedback-icon">✓</div>
+                <div class="feedback-text" style="color: var(--green);">Approved</div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation bottom" style="bottom: -45px; left: 50%; transform: translateX(-50%);">Command executes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternate Flow: Decline -->
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <span class="section-divider-text">Alternative: Decline Flow</span>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div class="journey-row">
+      <!-- Alt Step: Declined -->
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number" style="background: var(--red);">✕</div>
+          <span class="step-title">Declined</span>
+        </div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content">
+                <div class="connection-status">
+                  <div class="status-dot connected"></div>
+                  <span class="status-text">Connected to 192.168.1.42:8754</span>
+                </div>
+              </div>
+            </div>
+            <div class="feedback-overlay">
+              <div class="feedback-content declined">
+                <div class="feedback-icon">✕</div>
+                <div class="feedback-text" style="color: var(--red);">Declined</div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation bottom" style="bottom: -45px; left: 50%; transform: translateX(-50%);">Command blocked</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multiple Requests -->
+    <div class="section-divider">
+      <div class="section-divider-line"></div>
+      <span class="section-divider-text">Multiple Requests</span>
+      <div class="section-divider-line"></div>
+    </div>
+
+    <div class="journey-row">
+      <div class="journey-step">
+        <div class="step-header">
+          <div class="step-number">+</div>
+          <span class="step-title">Queue</span>
+        </div>
+        <div class="phone-frame" style="position: relative;">
+          <div class="request-count-badge">3</div>
+          <div class="phone-screen">
+            <div class="screen-layout">
+              <div class="status-bar">
+                <span class="status-bar-left">9:41</span>
+                <div class="status-bar-right">
+                  <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v4C5 9.33 4.33 10 3.5 10h-1C1.67 10 1 9.33 1 8.5v-4zM6 3.5C6 2.67 6.67 2 7.5 2h1C9.33 2 10 2.67 10 3.5v5c0 .83-.67 1.5-1.5 1.5h-1C6.67 9 6 8.33 6 7.5v-5zM11 2.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-6z"/></svg>
+                  <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 2.5a6.5 6.5 0 0 1 4.6 1.9.75.75 0 1 0 1.06-1.06A8 8 0 0 0 7.5 1a8 8 0 0 0-5.66 2.34.75.75 0 0 0 1.06 1.06A6.5 6.5 0 0 1 7.5 2.5zM7.5 5.5a4 4 0 0 1 2.83 1.17.75.75 0 1 0 1.06-1.06A5.5 5.5 0 0 0 7.5 4a5.5 5.5 0 0 0-3.89 1.61.75.75 0 0 0 1.06 1.06A4 4 0 0 1 7.5 5.5zM9.25 8.75a1.75 1.75 0 1 1-3.5 0 1.75 1.75 0 0 1 3.5 0z"/></svg>
+                  <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1"/><rect x="2" y="2" width="17" height="7" rx="1"/></svg>
+                </div>
+              </div>
+              <div class="nav-large"><h1>Claude Approval</h1></div>
+              <div class="screen-content" style="padding-bottom: 20px;">
+                <div class="connection-status">
+                  <div class="status-dot connected"></div>
+                  <span class="status-text">Connected to 192.168.1.42:8754</span>
+                </div>
+
+                <!-- Request 1 -->
+                <div class="request-card">
+                  <div class="request-header">
+                    <div class="request-tool">
+                      <div class="tool-icon bash">⌘</div>
+                      <span class="tool-name">Bash</span>
+                    </div>
+                    <span class="request-time">5s ago</span>
+                  </div>
+                  <div class="request-description">npm install</div>
+                  <div class="request-actions">
+                    <button class="action-btn decline">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                      Decline
+                    </button>
+                    <button class="action-btn approve">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+                      Approve
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Request 2 -->
+                <div class="request-card">
+                  <div class="request-header">
+                    <div class="request-tool">
+                      <div class="tool-icon edit">📝</div>
+                      <span class="tool-name">Edit</span>
+                    </div>
+                    <span class="request-time">3s ago</span>
+                  </div>
+                  <div class="request-description">Modify: src/App.tsx</div>
+                  <div class="request-actions">
+                    <button class="action-btn decline">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                      Decline
+                    </button>
+                    <button class="action-btn approve">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>
+                      Approve
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Request 3 (partial) -->
+                <div class="request-card" style="opacity: 0.7;">
+                  <div class="request-header">
+                    <div class="request-tool">
+                      <div class="tool-icon read">👁</div>
+                      <span class="tool-name">Read</span>
+                    </div>
+                    <span class="request-time">1s ago</span>
+                  </div>
+                  <div class="request-description">Read: package.json</div>
+                </div>
+              </div>
+            </div>
+            <div class="home-indicator"></div>
+          </div>
+          <div class="annotation left" style="top: 200px; right: -140px;">← Scrollable list</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <style>
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; pointer-events: none; }
+    }
+  </style>
+</body>
+</html>
