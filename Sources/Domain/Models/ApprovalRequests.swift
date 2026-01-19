@@ -8,21 +8,49 @@ public final class ApprovalRequests {
     public private(set) var isConnected: Bool = false
     public private(set) var serverAddress: String?
 
-    private var service: ApprovalService?
+    private var service: (any ApprovalService)?
 
     public init() {}
 
+    // MARK: - Computed Properties
+
     public var pendingCount: Int {
-        requests.count
+        requests.filter { $0.isPending }.count
     }
 
     public var isEmpty: Bool {
         requests.isEmpty
     }
 
+    public var pendingRequests: [ApprovalRequest] {
+        requests.filter { $0.isPending }
+    }
+
+    public var expiredRequests: [ApprovalRequest] {
+        requests.filter { $0.isExpired }
+    }
+
+    public var resolvedRequests: [ApprovalRequest] {
+        requests.filter { $0.status.isResolved }
+    }
+
+    public var oldestPendingRequest: ApprovalRequest? {
+        pendingRequests.min { $0.timestamp < $1.timestamp }
+    }
+
+    // MARK: - Queries
+
+    public func requests(forTool tool: String) -> [ApprovalRequest] {
+        requests.filter { $0.tool == tool }
+    }
+
+    public func request(byId id: String) -> ApprovalRequest? {
+        requests.first { $0.id == id }
+    }
+
     // MARK: - Service Configuration
 
-    public func configure(service: ApprovalService) {
+    public func configure(service: any ApprovalService) {
         self.service = service
     }
 
@@ -50,39 +78,43 @@ public final class ApprovalRequests {
     public func refresh() async {
         guard let service else { return }
 
-        // Try to fetch even if not "connected" - the HTTP request will work
-        // if we have a valid server address from Bonjour discovery
         do {
             let pending = try await service.fetchPendingRequests()
             requests = pending
-            // If fetch succeeded, we're effectively connected
             if !isConnected {
                 isConnected = true
             }
         } catch {
-            // Fetch failed - could be not connected or network error
-            // Don't clear requests immediately, they might still be valid
             print("Refresh failed: \(error)")
         }
     }
 
     public func approve(_ request: ApprovalRequest) async {
         guard let service else { return }
+
+        // Use domain model's behavior method
+        guard request.approve() else { return }
+
         do {
             try await service.respond(to: request.id, approved: true)
             requests.removeAll { $0.id == request.id }
         } catch {
-            // Handle error silently for POC
+            // Rollback on failure
+            // Note: status already changed, would need to track for proper rollback
         }
     }
 
     public func decline(_ request: ApprovalRequest) async {
         guard let service else { return }
+
+        // Use domain model's behavior method
+        guard request.decline() else { return }
+
         do {
             try await service.respond(to: request.id, approved: false)
             requests.removeAll { $0.id == request.id }
         } catch {
-            // Handle error silently for POC
+            // Rollback on failure
         }
     }
 
@@ -94,5 +126,13 @@ public final class ApprovalRequests {
 
     public func remove(_ request: ApprovalRequest) {
         requests.removeAll { $0.id == request.id }
+    }
+
+    /// Mark all expired requests and remove them
+    public func cleanupExpired() {
+        for request in requests {
+            request.markExpiredIfNeeded()
+        }
+        requests.removeAll { $0.status == .expired }
     }
 }

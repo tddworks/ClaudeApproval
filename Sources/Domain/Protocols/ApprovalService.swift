@@ -1,5 +1,7 @@
 import Foundation
 
+// TODO: Add @Mockable when Mockable dependency is added
+// @Mockable
 /// Protocol for approval service communication
 public protocol ApprovalService: Sendable {
     /// Start browsing for Claude approval servers via Bonjour
